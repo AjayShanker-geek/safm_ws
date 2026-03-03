@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(mavros_msgs REQUIRED)
 
 add_executable(sensor_combined_to_imu_node src/sensor_combined_to_imu_node.cpp)
 ament_target_dependencies(sensor_combined_to_imu_node
@@ -17,8 +18,16 @@ ament_target_dependencies(sensor_combined_to_imu_node
   px4_msgs
 )
 
+add_executable(setpoint_conversion src/setpoint_conversion.cpp)
+ament_target_dependencies(setpoint_conversion
+  rclcpp
+  px4_msgs
+  mavros_msgs
+)
+
 install(TARGETS
   sensor_combined_to_imu_node
+  setpoint_conversion
   DESTINATION lib/${PROJECT_NAME}
 )
 
