@@ -30,6 +30,7 @@ add_executable(local_pose_conversion src/local_pose_conversion.cpp)
 ament_target_dependencies(local_pose_conversion
   rclcpp
   geometry_msgs
+  sensor_msgs
   px4_msgs
 )
 

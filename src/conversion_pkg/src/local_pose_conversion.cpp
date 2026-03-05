@@ -1,6 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <cmath>
 
@@ -16,7 +17,8 @@ public:
     this->declare_parameter("tracking_ros.vehicle_local_position_topic", "/fmu/out/vehicle_local_position");
     local_pose_topic_ros2_ = this->get_parameter("tracking_ros.vehicle_local_position_topic").as_string();
     local_pose_topic_ros1_ = "mavros/local_position/pose";
-    local_vel_topic_ros1_  = "mavros/local_position/velocity";
+    local_vel_topic_ros1_  = "mavros/local_position/velocity_local";
+    local_acc_topic_ros1_  = "mavros/imu/data";
 
     local_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
       local_pose_topic_ros1_, qos,
@@ -26,6 +28,10 @@ public:
       local_vel_topic_ros1_, qos,
       std::bind(&LocalPoseConversion::local_vel_callback, this, std::placeholders::_1));
 
+    local_acc_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
+      local_acc_topic_ros1_, qos,
+      std::bind(&LocalPoseConversion::local_acc_callback, this, std::placeholders::_1));
+
     local_pose_pub_ = this->create_publisher<px4_msgs::msg::VehicleLocalPosition>(local_pose_topic_ros2_, 10);
   }
 
@@ -34,6 +40,12 @@ private:
   {
     last_velocity_ = *msg;
     has_velocity_ = true;
+  }
+
+  void local_acc_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
+  {
+    last_imu_ = *msg;
+    has_imu_ = true;
   }
 
   void local_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -75,19 +87,32 @@ private:
       px4_msg.v_z_valid  = false;
     }
 
+    if (has_imu_) {
+      const auto &a = last_imu_.linear_acceleration;
+      // ENU -> NED acceleration: ax_NED = ay_ENU, ay_NED = ax_ENU, az_NED = -az_ENU
+      px4_msg.ax = static_cast<float>( a.y);
+      px4_msg.ay = static_cast<float>( a.x);
+      px4_msg.az = static_cast<float>(-a.z);
+    }
+
     local_pose_pub_->publish(px4_msg);
   }
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr local_pose_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr local_vel_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr local_acc_sub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_pose_pub_;
 
   std::string local_pose_topic_ros2_;
   std::string local_pose_topic_ros1_;
   std::string local_vel_topic_ros1_;
+  std::string local_acc_topic_ros1_;
 
   geometry_msgs::msg::TwistStamped last_velocity_;
   bool has_velocity_ = false;
+
+  sensor_msgs::msg::Imu last_imu_;
+  bool has_imu_ = false;
 };
 
 int main(int argc, char *argv[])
