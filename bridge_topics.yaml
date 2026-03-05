@@ -14,6 +14,6 @@ topics:
 
 services_1_to_2:
   - service: /mavros/set_mode
-    type: mavros_msgs/SetMode
+    type: mavros_msgs/srv/SetMode
   - service: /mavros/cmd/arming
-    type: mavros_msgs/CommandBool
+    type: mavros_msgs/srv/CommandBool
