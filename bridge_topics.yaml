@@ -8,7 +8,7 @@ topics:
   - topic: /mavros/setpoint_raw/attitude
     type: mavros_msgs/msg/AttitudeTarget
     queue_size: 10
-  - topic: /imu/data_raw
+  - topic: /mavros/imu/data_raw
     type: sensor_msgs/msg/Imu
     queue_size: 10
 
