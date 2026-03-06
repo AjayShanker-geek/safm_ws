@@ -88,11 +88,29 @@ private:
     }
 
     if (has_imu_) {
+      // IMU linear_acceleration is in FLU body frame and includes gravity.
+      // Rotate body-frame accel to ENU world frame using the pose orientation,
+      // subtract gravity, then convert ENU -> NED.
       const auto &a = last_imu_.linear_acceleration;
-      // ENU -> NED acceleration: ax_NED = ay_ENU, ay_NED = ax_ENU, az_NED = -az_ENU
-      px4_msg.ax = static_cast<float>( a.y);
-      px4_msg.ay = static_cast<float>( a.x);
-      px4_msg.az = static_cast<float>(-a.z);
+      const auto &qr = msg->pose.orientation;
+
+      // Rotate vector v by quaternion q: v' = q * v * q_inv
+      // Using the rotation matrix derived from quaternion:
+      double qw = qr.w, qx = qr.x, qy = qr.y, qz = qr.z;
+      double ax_b = a.x, ay_b = a.y, az_b = a.z;
+
+      double ax_enu = (1 - 2*(qy*qy + qz*qz)) * ax_b + 2*(qx*qy - qw*qz) * ay_b + 2*(qx*qz + qw*qy) * az_b;
+      double ay_enu = 2*(qx*qy + qw*qz) * ax_b + (1 - 2*(qx*qx + qz*qz)) * ay_b + 2*(qy*qz - qw*qx) * az_b;
+      double az_enu = 2*(qx*qz - qw*qy) * ax_b + 2*(qy*qz + qw*qx) * ay_b + (1 - 2*(qx*qx + qy*qy)) * az_b;
+
+      // Subtract gravity (ENU: gravity is [0, 0, -9.80665])
+      constexpr double GRAVITY = 9.80665;
+      az_enu -= GRAVITY;
+
+      // ENU -> NED: x_NED = y_ENU, y_NED = x_ENU, z_NED = -z_ENU
+      px4_msg.ax = static_cast<float>(ay_enu);
+      px4_msg.ay = static_cast<float>(ax_enu);
+      px4_msg.az = static_cast<float>(-az_enu);
     }
 
     local_pose_pub_->publish(px4_msg);
