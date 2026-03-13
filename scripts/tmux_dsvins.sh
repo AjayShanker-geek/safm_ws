@@ -13,9 +13,9 @@ WS_DIR="$HOME/wyc/"
 tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
 
 # Create session and split layout: LEFT, RIGHT-TOP , RIGHT-BOTTOM
-readarray -t PANES < <(tmux list-panes -t "$SESSION_NAME" -F '#{pane_id}')
 tmux new-session -d -s "$SESSION_NAME" -c "$WS_DIR"
 tmux split-window -h -t "$SESSION_NAME" -c "$WS_DIR"
+readarray -t PANES < <(tmux list-panes -t "$SESSION_NAME" -F '#{pane_id}')
 
 LEFT_PANE="${PANES[0]}"
 RIGHT_PANE="${PANES[1]}"
@@ -28,17 +28,18 @@ tmux send-keys -t "$LEFT_PANE" "roslaunch mavros px4.launch fcu_url:=\"/dev/ttyT
 
 # RIGHT-TOP for image driver
 tmux send-keys -t "$RIGHT_PANE" "cd ${WS_DIR}oak_ffc_4p_ros" C-m
-tmux send-keys -t "$RIGHT_PANE" "./start_docker.sh 1" C-m
+tmux send-keys -t "$RIGHT_PANE" "sleep 2 && ./start_docker.sh 1" C-m
 tmux send-keys -t "$RIGHT_PANE" "source ./devel/setup.bash" C-m
 tmux send-keys -t "$RIGHT_PANE" "roslaunch oak_ffc_4p_ros OV9782.launch" C-m
 
 # BOTTOM LEFT for D2SLAM
 tmux send-keys -t "$BOT_LEFT_PANE" "cd ${WS_DIR}D2SLAM" C-m
-tmux send-keys -t "$BOT_LEFT_PANE" "./start_docker.sh 1" C-m
+tmux send-keys -t "$BOT_LEFT_PANE" "sleep 4 && ./start_docker.sh 1" C-m
 tmux send-keys -t "$BOT_LEFT_PANE" "source ./devel/setup.bash" C-m
-tmux send-keys -t "$BOT_LEFT_PANE" "roslaunch d2vims quadcam.launch" C-m
+tmux send-keys -t "$BOT_LEFT_PANE" "roslaunch d2vins quadcam.launch" C-m
 
 # BOTTOM RIGHT for odom -> mavros vison pose
 tmux send-keys -t "$BOT_RIGHT_PANE" "cd ${WS_DIR}adaptor_ws/" C-m
 tmux send-keys -t "$BOT_RIGHT_PANE" "./devel/setup.bash" C-m
 tmux send-keys -t "$BOT_RIGHT_PANE" "roslaunch vins_to_mavros vins_to_mavros.launch" C-m
+
