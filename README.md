@@ -1,10 +1,6 @@
 # SAFM Workspace
 
 ## Working with ros1_bridge
-### Install some dependencies:
-```bash
-
-```
 
 ### Build px4_msgs in ROS1 workspace (skip this step if you don't want to "bridge-all-topics"):
 ```bash
@@ -36,7 +32,7 @@ roscore # or launch a ROS1 launch
 ```
 Second terminal:
 ```bash
-./ros1_bridge.sh 1 # -> bridge all topics (frequencies drop a lot)
+./scripts/ros1_bridge.sh 1 # -> bridge all topics (frequencies drop a lot)
     or
-./ros1_bridge.sh 2 # -> bridge specified topics (bridge_topics.yaml)
+./scripts/ros1_bridge.sh 2 # -> bridge specified topics (params/bridge_topics.yaml)
 ```

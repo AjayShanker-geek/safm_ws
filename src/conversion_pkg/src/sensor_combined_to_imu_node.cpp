@@ -8,19 +8,27 @@ class SensorCombinedToImu : public rclcpp::Node
 public:
   SensorCombinedToImu() : Node("sensor_combined_to_imu")
   {
+    this->declare_parameter<std::string>("sensor_combined_topic", "fmu/out/sensor_combined");
+    this->declare_parameter<std::string>("vehicle_attitude_topic", "fmu/out/vehicle_attitude");
+    this->declare_parameter<std::string>("imu_topic", "imu/data");
+
+    auto sensor_combined_topic = this->get_parameter("sensor_combined_topic").as_string();
+    auto vehicle_attitude_topic = this->get_parameter("vehicle_attitude_topic").as_string();
+    auto imu_topic = this->get_parameter("imu_topic").as_string();
+
     // QoS profile compatible with PX4 micro-XRCE-DDS bridge
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 5), qos_profile);
 
     sensor_sub_ = this->create_subscription<px4_msgs::msg::SensorCombined>(
-      "fmu/out/sensor_combined", qos,
+      sensor_combined_topic, qos,
       std::bind(&SensorCombinedToImu::sensor_callback, this, std::placeholders::_1));
 
     attitude_sub_ = this->create_subscription<px4_msgs::msg::VehicleAttitude>(
-      "fmu/out/vehicle_attitude", qos,
+      vehicle_attitude_topic, qos,
       std::bind(&SensorCombinedToImu::attitude_callback, this, std::placeholders::_1));
 
-    pub_ = this->create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", 10);
+    pub_ = this->create_publisher<sensor_msgs::msg::Imu>(imu_topic, 10);
   }
 
 private:
@@ -35,7 +43,7 @@ private:
     sensor_msgs::msg::Imu imu_msg;
 
     imu_msg.header.stamp = this->now();
-    imu_msg.header.frame_id = "imu_link";
+    imu_msg.header.frame_id = "base_link";
 
     // PX4 SensorCombined uses FRD
     // sensor_msgs/Imu expects FLU
@@ -49,17 +57,16 @@ private:
     imu_msg.linear_acceleration.z = -msg->accelerometer_m_s2[2];
 
     if (has_attitude_) {
-      // VehicleAttitude.q is Hamilton [w, x, y, z], FRD body -> NED earth.
-      // ROS expects FLU body -> ENU earth.
-      // Conversion: q_enu_flu = R * q_ned_frd * R^-1, where R rotates NED->ENU / FRD->FLU.
-      // This simplifies to: q_enu_flu = (w, x, -y, -z) of q_ned_frd
-      // then swap x,y for NED->ENU on the earth frame:
-      // Full transform: w'=w, x'=y, y'=x, z'=-z  (from q_ned_frd)
+      // VehicleAttitude.q is [w, x, y, z], FRD body -> NED earth.
+      // ROS IMU expects FLU body -> ENU earth.
+      // NED-FRD to ENU-FLU
+      // (1/sqrt(2)) * {W+Z, X+Y, X-Y, W-Z}
       const auto &q = last_attitude_.q;  // [w, x, y, z] in NED-FRD
-      imu_msg.orientation.w =  q[0];
-      imu_msg.orientation.x =  q[2];  // NED y -> ENU x
-      imu_msg.orientation.y =  q[1];  // NED x -> ENU y
-      imu_msg.orientation.z = -q[3];  // NED -z -> ENU z
+      constexpr float s = 0.7071067811865476f; // 1/sqrt(2)
+      imu_msg.orientation.w =  s*(q[0]+q[3]);
+      imu_msg.orientation.x =  s*(q[1]+q[2]);
+      imu_msg.orientation.y =  s*(q[1]-q[2]);
+      imu_msg.orientation.z =  s*(q[0]-q[3]);
       imu_msg.orientation_covariance = {0};
     } else {
       // No attitude yet

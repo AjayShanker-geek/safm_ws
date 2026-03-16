@@ -99,6 +99,7 @@ private:
       double qw = qr.w, qx = qr.x, qy = qr.y, qz = qr.z;
       double ax_b = a.x, ay_b = a.y, az_b = a.z;
 
+      // Rotate body accel to ENU: a_enu = R(q) * a_body
       double ax_enu = (1 - 2*(qy*qy + qz*qz)) * ax_b + 2*(qx*qy - qw*qz) * ay_b + 2*(qx*qz + qw*qy) * az_b;
       double ay_enu = 2*(qx*qy + qw*qz) * ax_b + (1 - 2*(qx*qx + qz*qz)) * ay_b + 2*(qy*qz - qw*qx) * az_b;
       double az_enu = 2*(qx*qz - qw*qy) * ax_b + 2*(qy*qz + qw*qx) * ay_b + (1 - 2*(qx*qx + qy*qy)) * az_b;

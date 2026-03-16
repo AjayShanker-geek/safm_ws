@@ -23,6 +23,7 @@ ament_target_dependencies(odom_to_visual_odom
   rclcpp
   nav_msgs
   px4_msgs
+  geometry_msgs
 )
 
 install(TARGETS
@@ -31,7 +32,7 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY launch
+install(DIRECTORY launch params
   DESTINATION share/${PROJECT_NAME}
 )
 
