@@ -1,11 +1,26 @@
 # SAFM Workspace
 
-## Working with ros1_bridge
-### Install some dependencies:
+## Install some dependencies:
 ```bash
-sudo apt-get install ros-foxy-mavros-msgs -y
-sudo apt-get install ros-noetic-mavros ros-noetic-mavros-extras -y
-```
+# For prepare.sh
+sudo apt install socat
+
+# Install Micro XRCE-DDS Agent
+git clone -b v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
+cd Micro-XRCE-DDS-Agent
+mkdir build
+cd build
+cmake ..
+make -j8 # adjust this according to CPU's core count
+sudo make install
+sudo ldconfig /usr/local/lib/
+
+# Install ROS2 Foxy
+
+# Install ROS1 Noetic
+``` 
+
+## Working with ros1_bridge
 
 ### Build px4_msgs in ROS1 workspace (skip this step if you don't want to "bridge-all-topics"):
 ```bash
@@ -37,7 +52,7 @@ roscore # or launch a ROS1 launch
 ```
 Second terminal:
 ```bash
-./ros1_bridge.sh 1 # -> bridge all topics (frequencies drop a lot)
+./scripts/ros1_bridge.sh 1 # -> bridge all topics (frequencies drop a lot)
     or
-./ros1_bridge.sh 2 # -> bridge specified topics (bridge_topics.yaml)
+./scripts/ros1_bridge.sh 2 # -> bridge specified topics (params/bridge_topics.yaml)
 ```

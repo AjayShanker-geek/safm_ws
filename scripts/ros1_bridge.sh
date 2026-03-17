@@ -24,8 +24,8 @@ if [ "$mode" = "1" ]; then
   ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
   # the topics frequencies drop a lot
 else
-  SCRIPT_DIR="$(dirname "$0")"
-  rosparam load "$SCRIPT_DIR/bridge_topics.yaml"
+  SCRIPT_DIR="$(dirname "$0")" # get the directory of the current script
+  rosparam load "$SCRIPT_DIR/../params/bridge_topics.yaml"
   ros2 run ros1_bridge parameter_bridge
 fi
 
