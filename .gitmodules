@@ -7,3 +7,6 @@
 [submodule "src/drone_racing"]
 	path = src/drone_racing
 	url = git@github.com:JulyThirteenth/drone_racing.git
+[submodule "src/D2SLAM"]
+	path = src/D2SLAM
+	url = https://github.com/nat9dai/D2SLAM.git
