@@ -133,31 +133,55 @@ QGC_FORWARD_CMD="socat -d -d /dev/ttyACM0,raw,b115200,echo=0 UDP-SENDTO:$GCS_IP:
 start_screen_session "qgc_forward" "$QGC_FORWARD_CMD"
 
 # ============================================================================
-# Module 3: VRPN/Vicon Motion Capture Client
+# Module 3: ROS1 Core (roscore)
+# ============================================================================
+# Starts ROS1 master node required for ros1_bridge communication
+echo ""
+echo "======================================"
+echo "Starting ROS1 Core (roscore)..."
+echo "======================================"
+screen -dmS "roscore" bash -c "source /opt/ros/noetic/setup.bash && roscore; exec bash"
+echo "Screen session 'roscore' started"
+sleep 3  # Wait for roscore to initialize
+
+# ============================================================================
+# Module 4: ROS1 Bridge
+# ============================================================================
+# Bridges specified topics between ROS1 and ROS2 (bridge_topics.yaml)
+echo ""
+echo "======================================"
+echo "Starting ROS1 Bridge..."
+echo "======================================"
+screen -dmS "ros1_bridge" bash -c "cd $WORKSPACE_DIR && ./scripts/ros1_bridge.sh 2; exec bash"
+echo "Screen session 'ros1_bridge' started"
+sleep 1
+
+# ============================================================================
+# Module 5: VRPN/Vicon Motion Capture Client
 # ============================================================================
 # Connects to Vicon motion capture system and publishes pose data to ROS2
 # - Server: VICON_IP (Vicon Tracker server address)
 # - Port: 3883 (VRPN default port)
 # - Publishes: Transform data for tracked objects
-echo ""
-echo "======================================"
-echo "Starting VRPN/Vicon Client..."
-echo "======================================"
-VICON_CLIENT_CMD="ros2 launch vrpn_mocap client.launch.yaml server:=$VICON_IP port:=3883"
+# echo ""
+# echo "======================================"
+# echo "Starting VRPN/Vicon Client..."
+# echo "======================================"
+# VICON_CLIENT_CMD="ros2 launch vrpn_mocap client.launch.yaml server:=$VICON_IP port:=3883"
 # start_screen_session "vicon_client" "$VICON_CLIENT_CMD"
 
 # ============================================================================
-# Module 4: Vicon to PX4 Bridge
+# Module 6: Vicon to PX4 Bridge
 # ============================================================================
 # Converts Vicon pose data to PX4-compatible format and publishes
 # - Reads: Vicon pose from vrpn_mocap
 # - Publishes: Vision-based position estimate to PX4
 # - Handles: Frame transformations (ENU/NED/FLU conversions)
-echo ""
-echo "======================================"
-echo "Starting Vicon-PX4 Bridge..."
-echo "======================================"
-VICON_BRIDGE_CMD="ros2 launch vicon_px4_bridge vicon_px4_bridge.launch.py"
+# echo ""
+# echo "======================================"
+# echo "Starting Vicon-PX4 Bridge..."
+# echo "======================================"
+# VICON_BRIDGE_CMD="ros2 launch vicon_px4_bridge vicon_px4_bridge.launch.py"
 # start_screen_session "vicon_bridge" "$VICON_BRIDGE_CMD"
 
 # ============================================================================
@@ -177,6 +201,8 @@ echo ""
 echo "Available sessions:"
 echo "  - px4_microdds: PX4 MicroXRCE-DDS Agent"
 echo "  - qgc_forward: QGroundControl Forwarder"
+echo "  - roscore: ROS1 Core"
+echo "  - ros1_bridge: ROS1-ROS2 Bridge (specified topics)"
 # echo "  - vicon_client: Vicon Motion Capture Client"
 # echo "  - vicon_bridge: Vicon-PX4 Bridge"
 echo ""
