@@ -26,6 +26,15 @@ set -e  # Exit on any error
 # Environment Variable Validation
 # ============================================================================
 
+
+echo "======================================"
+echo "Rebooting PX4 via MAVLink Shell... Please wait..."
+echo "======================================"
+
+# Reboot PX4 using MAVLink Shell
+$HOME/safm_ws/src/tools/mavlink_shell/reboot_px4_mavlink.sh  && echo "PX4 reboot command sent successfully."
+
+
 echo "======================================"
 echo "sync with remote time server if ssh connected..."
 echo "======================================"
@@ -88,16 +97,16 @@ ROS2_SETUP_CMD="source /opt/ros/foxy/setup.bash && source $WORKSPACE_DIR/install
 start_screen_session() {
     local session_name=$1
     local command=$2
-    
+
     echo "Starting screen session: $session_name"
-    
+
     # Check if screen session already exists
     if screen -list | grep -q "$session_name"; then
         echo "  WARNING: Screen session '$session_name' already exists. Killing it..."
         screen -S "$session_name" -X quit
         sleep 1
     fi
-    
+
     # Create new detached screen session with proper environment setup
     screen -dmS "$session_name" bash -c "$ROS2_SETUP_CMD && $command; exec bash"
     echo "  ✓ Screen session '$session_name' started"
